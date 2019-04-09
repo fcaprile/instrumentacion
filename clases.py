@@ -39,15 +39,26 @@ class Osciloscopio(Instrumento):
         data=(data-yoff1)*ymu1+yze1
         tiempo = xze + np.arange(len(data)) * xin
         plt.plot(tiempo, data)
-#        return tiempo,data
+        
+class GeneradorFunciones(Instrumento):
     
+    def __init__ (self, serial):
+        resource_name = 'USB0::0x0699::0x0346::{}::INSTR'.format(serial)
+        super().__init__(resource_name)
+    
+    def freq(f):   
+        self.inst.write('FREQ{}'.format(f))
+    def shape(shape):
+        self.inst.write('FUNC{}'.format(shape))
+        
+        
 osc=Osciloscopio('C017067')
 osc.idn()
 osc.get_config()
 osc.capture_channel(1)
 
-gen=GeneradorFunciones()
+gen=GeneradorFunciones('C036492')
 gen.idn()
-gen.freq()
-gen.shape()
+gen.freq(10**5)
+gen.shape('SIN')
 #o1.setup()
