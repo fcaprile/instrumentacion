@@ -9,6 +9,7 @@ from lantz import Feat, Action
 import numpy as np
 from matplotlib import pyplot as plt
 import time
+from lantz import ureg
 
 class Osciloscopio(MessageBasedDriver):
  
@@ -64,7 +65,35 @@ class Osciloscopio(MessageBasedDriver):
         tiempo = xze + np.arange(len(data)) * xin
         plt.plot(tiempo,data)
 
+    @Feat(units='s')
+    def timebase(self):
+        return self.query('HOR:MAIN:SCA?')
 
+    @timebase.setter
+    def timebase(self, value):
+        return self.write('HOR:MAIN:SCA {}'.format(value))
+    
+    #ver como era lo de hacer una accion solo 1 vez
+    @Action()
+    def set_IMM_VPP(self):
+        self.write('MEASU:IMM:TYP PK2')#fijarse si este comando funciona
+    
+    @Action(limits=(1,2))
+    def acquire_VPP(self,channel=1): #preguntarle unidades al osci
+        self.set_IMM_VPP()
+        self.write('MEASU:IMM:SOU CH{}'.format(channel)) #ver como solo hacerlo si el canal cambio
+        return self.query('MEASU:IMM:VAL?')
+    
+    #agregar funcion escala de voltaje
+    @Feat()
+    def scale(self):
+        self.query('WFMPRE:YMU ?')
+        
+    @scale.setter
+    def scale(self,value):
+        self.query('WFMPRE:YMU ?')
+        
+    
 class Fungen(MessageBasedDriver):
 
     @Feat()
@@ -82,20 +111,35 @@ class Fungen(MessageBasedDriver):
     def frequency(self,value):
         self.write('FREQ{}'.format(value))
 
-def barrido(osci,gen,fi, ff, pasos,channel=1):
+
+
+
+def barrido_pantalla(osci,gen,fi, ff, pasos,channel=1, n_periodos=5):
     osci.datasource= channel
     c=0
-    tiempo=np.zeros([pasos,2500])
-    voltaje=np.zeros([pasos,2500])
     for i in np.linspace(fi, ff, pasos):
         gen.frequency=i
-        plt.figure(num=i, figsize=(14, 10), dpi=80, facecolor='w', edgecolor='k')
-        tiempo,voltaje=osci.plot_curve()
+        osci.timebase=1/i * ureg.seconds * n_periodos
+        plt.figure(num=c, figsize=(14, 10), dpi=80, facecolor='w', edgecolor='k')
+        osci.plot_curve()
         c+=1
         time.sleep(0.1)
         
-
-
+def barrido_VPP(osci,gen,fi, ff, pasos,channel=1, n_periodos=5):
+    osci.datasource= channel
+    vpp=[]
+    for i in np.linspace(fi, ff, pasos):
+        gen.frequency=i
+        osci.timebase=1/i * ureg.seconds * n_periodos
+        vpp.append(osci.acquire_VPP(channel))
+        time.sleep(0.1)
+    
+    plt.figure(num=1, figsize=(14, 10), dpi=80, facecolor='w', edgecolor='k')
+    plt.plot(np.linspace(fi, ff, pasos),vpp,'b*')
+    plt.xlabel('Frecuencia (Hz)')#ver unidades
+    plt.ylabel('Vpp (V)')#ver unidades
+    return vpp
+    
 gen=Fungen()
 gen.initialize()
 
@@ -103,7 +147,7 @@ osci=Osciloscopio('USB0::0x0699::0x0363::C065087::INSTR')
 osci.initialize()
 
 
-barrido(gen, osci,10**5,4*10**5,4)
+barrido(gen, osci,10**5,4*10**5,pasos=4,n_periodos=3)
 #falta cmabiar base de tiempo y de voltaje
 
 #6para usar unidades:
