@@ -37,3 +37,8 @@ plt.ylabel('Corriente (mA)')
 plt.xlabel('Tension (mV)')
 plt.legend(loc = 'best') 
 
+Kb=1.38*10**-23
+T=298
+
+print('Is =',popt[0])
+print('q/eta =',popt[1]/Kb/T)
