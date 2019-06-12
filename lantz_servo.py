@@ -7,29 +7,10 @@ Created on Wed Jun 12 05:10:00 2019
 import lantz
 import time
 from lantz.ino import INODriver, QuantityFeat, BoolFeat
-import cv2
-
-#cv2.namedWindow("preview")
-vc = cv2.VideoCapture(0)
 
 class Servo(INODriver):       
     angulo = QuantityFeat('Angulo', setter=True)
     enable = BoolFeat('ENABLE')
-
-if vc.isOpened(): # try to get the first frame
-    rval, frame = vc.read()
-else:
-    rval = False
-
-while rval:
-    cv2.imshow("preview", frame)
-    rval, frame = vc.read()
-    key = cv2.waitKey(20)
-    if key == 27: # exit on ESC
-        break
-cv2.destroyWindow("preview")
-
-
 
 if __name__ == '__main__':
     with Servo.via_packfile('Servo.pack.yaml') as dev:
