@@ -40,7 +40,7 @@ frecuencia_medida=[]
 
 with nidaqmx.Task() as task:
     task.ai_channels.add_ai_voltage_chan("Dev12/ai1",terminal_config=nidaqmx.constants.TerminalConfiguration.NRSE)
-#    print(task.timing.cfg_samp_clk_timing(fs))
+    print(task.timing.cfg_samp_clk_timing(fs))
     task.ai_channels.add_ai_voltage_chan("Dev12/ai9",terminal_config=nidaqmx.constants.TerminalConfiguration.NRSE)
     tension=task.read(1000)
     plt.plot(tension[0])
@@ -50,10 +50,10 @@ with nidaqmx.Task() as task:
 #        tension=task.read(5000)   
 #    #    plt.plot(tension) 
 ##       metodo fft
-#        frecuencias,amplitudes=fourier(tension,fs)
-#        posicion_frec=detect_peaks(amplitudes,mph=max(amplitudes)*0.75,mpd=1)[0]
-#        frecuencia_maxima=frecuencias[posicion_frec]
-#        frecuencia_medida.append(frecuencia_maxima)
+        frecuencias,amplitudes=fourier(tension,fs)
+        posicion_frec=detect_peaks(amplitudes,mph=max(amplitudes)*0.75,mpd=1)[0]
+        frecuencia_maxima=frecuencias[posicion_frec]
+        frecuencia_medida.append(frecuencia_maxima)
 
 
 #       metodo detectar picos
@@ -63,11 +63,11 @@ with nidaqmx.Task() as task:
 ##        frecuencia_medida.append(1/(duracion/len(posicion_picos)))
 #        frecuencia_medida.append(1/periodo)
 #        print(frecuencia)
-#plt.plot(frecuencias_usadas,frecuencia_medida,'b*')
-#plt.grid(True)
-#plt.xlabel('Frecuencia enviada (Hz)')
-#plt.ylabel('Frecuencia medida (Hz)')
-#plt.title('Nyquist a fs='+str(fs))
+plt.plot(frecuencias_usadas,frecuencia_medida,'b*')
+plt.grid(True)
+plt.xlabel('Frecuencia enviada (Hz)')
+plt.ylabel('Frecuencia medida (Hz)')
+plt.title('Nyquist a fs='+str(fs))
 
 #np.savetxt('Nyquist a fs='+str(fs)+'.txt',[frecuencias_usadas,frecuencia_medida])
 gen.close()
