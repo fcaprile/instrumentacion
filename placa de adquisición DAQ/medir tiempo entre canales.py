@@ -18,8 +18,6 @@ resource_name_gen=rm.list_resources()[0]
 gen=rm.open_resource(resource_name_gen)
 
 
-
-
 system = nidaqmx.system.System.local()
 #system.driver_version
 for device in system.devices:
@@ -36,25 +34,20 @@ def fourier(y,fs):
     yf=fft(y)
     return xf, 2.0/N * np.abs(yf[0:N//2])
 
-fs=30000
+fs=10000
 frecuencias_usadas=np.linspace(1500,15000,100)
 frecuencia_medida=[]
-
+duracion=1000
 with nidaqmx.Task() as task:
     task.ai_channels.add_ai_voltage_chan("Dev12/ai1",terminal_config=nidaqmx.constants.TerminalConfiguration.NRSE)
+    task.ai_channels.add_ai_voltage_chan("Dev12/ai9",terminal_config=nidaqmx.constants.TerminalConfiguration.NRSE)
     print(task.timing.cfg_samp_clk_timing(fs))
-#    task.ai_channels.add_ai_voltage_chan("Dev12/ai9",terminal_config=nidaqmx.constants.TerminalConfiguration.NRSE)
-    a=10
-    b=1000
-    med=np.zeros([a*b])
-    for i in range(a):
-        med[i*b:(i+1)*b]=task.read(b)
-    plt.plot(med,'b*')
-#plt.plot(frecuencias_usadas,frecuencia_medida,'b*')
-#plt.grid(True)
-#plt.xlabel('Posición')
-#plt.ylabel('Tension (V)')
-#plt.title('Nyquist a fs='+str(fs))
+    tension=task.read(duracion)
+    tiempo=np.linspace(0,duracion/fs,duracion)
+    tension1=tension[0]
+    tension2=tension[1]
+    plt.plot(tiempo,tension1,'b*')
+    plt.plot(tiempo,tension2,'r*')
 
-#np.savetxt('tiempo muerto.txt',[med],delimiter='\t')
+#np.savetxt('Tiempo multiplexado.txt',[tiempo,tension1,tension2],delimiter='\t')
 gen.close()

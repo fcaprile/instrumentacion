@@ -18,6 +18,8 @@ resource_name_gen=rm.list_resources()[0]
 gen=rm.open_resource(resource_name_gen)
 
 
+
+
 system = nidaqmx.system.System.local()
 #system.driver_version
 for device in system.devices:
@@ -34,44 +36,25 @@ def fourier(y,fs):
     yf=fft(y)
     return xf, 2.0/N * np.abs(yf[0:N//2])
 
-fs=10000
+fs=30000
 frecuencias_usadas=np.linspace(1500,15000,100)
 frecuencia_medida=[]
-duracion=1000
+
 with nidaqmx.Task() as task:
     task.ai_channels.add_ai_voltage_chan("Dev12/ai1",terminal_config=nidaqmx.constants.TerminalConfiguration.NRSE)
-    task.ai_channels.add_ai_voltage_chan("Dev12/ai9",terminal_config=nidaqmx.constants.TerminalConfiguration.NRSE)
     print(task.timing.cfg_samp_clk_timing(fs))
-    tension=task.read(duracion)
-    tiempo=np.linspace(0,duracion/fs,duracion)
-    tension1=tension[0]
-    tension2=tension[1]
-    plt.plot(tiempo,tension1,'b*')
-    plt.plot(tiempo,tension2,'r*')
-#    for f in frecuencias_usadas:
-#        gen.write('FREQ %f' % f)
-#    #    print(task.read()) 
-#        tension=task.read(5000)   
-#    #    plt.plot(tension) 
-##       metodo fft
-#        frecuencias,amplitudes=fourier(tension,fs)
-#        posicion_frec=detect_peaks(amplitudes,mph=max(amplitudes)*0.75,mpd=1)[0]
-#        frecuencia_maxima=frecuencias[posicion_frec]
-#        frecuencia_medida.append(frecuencia_maxima)
-
-
-#       metodo detectar picos
-#        posicion_picos=detect_peaks(tension, mph=0.1, mpd=5)
-##        duracion=1/400000*1000
-#        periodo=(posicion_picos[1]-posicion_picos[0])*1/fs
-##        frecuencia_medida.append(1/(duracion/len(posicion_picos)))
-#        frecuencia_medida.append(1/periodo)
-#        print(frecuencia)
+#    task.ai_channels.add_ai_voltage_chan("Dev12/ai9",terminal_config=nidaqmx.constants.TerminalConfiguration.NRSE)
+    a=10
+    b=1000
+    med=np.zeros([a*b])
+    for i in range(a):
+        med[i*b:(i+1)*b]=task.read(b)
+    plt.plot(med,'b*')
 #plt.plot(frecuencias_usadas,frecuencia_medida,'b*')
 #plt.grid(True)
-#plt.xlabel('Frecuencia enviada (Hz)')
-#plt.ylabel('Frecuencia medida (Hz)')
+#plt.xlabel('Posición')
+#plt.ylabel('Tension (V)')
 #plt.title('Nyquist a fs='+str(fs))
 
-#np.savetxt('Tiempo multiplexado.txt',[tiempo,tension1,tension2],delimiter='\t')
+#np.savetxt('tiempo muerto.txt',[med],delimiter='\t')
 gen.close()
