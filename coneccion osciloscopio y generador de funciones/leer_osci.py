@@ -33,4 +33,4 @@ tiempo,data=medir(1)
 plt.plot(tiempo,data)
 np.savetxt('lazo control 3V +-40 sleep100.txt',[tiempo,data],delimiter='\t')
 
-#usamos R=
+#para el lazo de control usamos R=3.2K C=330uF
