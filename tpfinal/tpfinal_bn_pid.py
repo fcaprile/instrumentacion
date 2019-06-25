@@ -57,19 +57,32 @@ xc=0
 yc=0
 r=0
 inicio=True
-tiempo_espera=1
+tiempo_espera=0.75
 angulo0=0 #por si hace falta agregarlo
+integral=0
+error_anterior=0
+pcrit=5
+kp=-0.5*0.6
+ki=2*kp/pcrit*0.7
+kd=kp*pcrit/8*1.5
+set_point=0
+
 if __name__ == '__main__':
     with Servo.via_packfile('Servo.pack.yaml') as dev:        
         print('Hola')            
         while rval:
             if inicio==True:
                 titas=[]
+                derivadas=[]
+                integrales=[]
+                errores=[]
                 angulo_a_mandar=0
+                error_anterior=0
+                integral=0
                 time.sleep(0.2)
                 posx1,posy1,matriz=medir_centro(dev,20)
-                posx2,posy2,matriz=medir_centro(dev,60)
-                posx3,posy3,matriz=medir_centro(dev,120)
+                posx2,posy2,matriz=medir_centro(dev,40)
+                posx3,posy3,matriz=medir_centro(dev,80)
                 x0=np.array([320,240,50])
                 puntos=np.array([posx1,posy1,posx2,posy2,posx3,posy3])
                 res=minim(chi,x0,puntos)
@@ -84,21 +97,37 @@ if __name__ == '__main__':
             if posx-len(gray[0,:])/2==0:
                 tita=1
             else:
-                tita=math.atan2((posy-yc),(posx-xc))*180/np.pi
-                titas.append(tita)
+                tita=math.atan2((posy-yc),(posx-xc))*180/np.pi+set_point
             print('El angulo es:',tita)            
             cv2.imshow("la magia", -matriz+255)            
             key = cv2.waitKey(20)
             if key == 27: # exit on ESC
-                np.savetxt('titas.txt',np.array(titas),delimiter='\t')
+                matriz=np.zeros((4,len(titas)))
+                matriz[0,:]=np.array(titas)
+                matriz[1,:]=np.array(derivadas)
+                matriz[2,:]=np.array(integrales)
+                matriz[3,:]=np.array(errores)
+                np.savetxt('titas,derivadas,integrales,errores,kp=0,5,ki0,7,kd1,5.txt',matriz,delimiter='\t')
                 break
             if key == 32: # apretando espacio renueva medicion del centro
                 inicio=True
-            angulo_a_mandar+=angulo0-tita*0.2
+            if key == 113: # apretando q cambia set point
+                set_point=float(input())
+            integral+=tita
+            derivative=(tita-error_anterior)
+            titas.append(tita)
+            integrales.append(integral)
+            derivadas.append(derivative)
+            angulo_a_mandar+=tita*kp+derivative*kd+integral*ki
+            errores.append(angulo_a_mandar)
             if abs(angulo_a_mandar)>90:
                 angulo_a_mandar=0
+                error_anterior=0
+                integral=0
+                
             print('Estamos mandando:',angulo_a_mandar+90)
             dev.angulo=angulo_a_mandar+90
+            error_anterior=tita
             time.sleep(tiempo_espera)
         cv2.destroyWindow("preview")
 '''
